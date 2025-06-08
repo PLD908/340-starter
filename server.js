@@ -6,16 +6,18 @@ require('dotenv').config();
 const app = express();
 const static = require('./routes/static');
 const baseController = require('./controllers/baseController');
-const invController = require('./controllers/inventoryController');
+const inventoryController = require('./controllers/inventoryController');
 const errorController = require('./controllers/errorController');
 const accountRoute = require('./routes/accountRoute');
 const utilities = require('./utilities');
+const inventoryRoutes = require('./routes/inventoryRoute');
 
 
 
 /* ***********************
  * Middleware
  * ************************/
+app.use(express.urlencoded({ extended: true }));
 app.use(session({
   store: new (require('connect-pg-simple')(session))({
     createTableIfMissing: true,
@@ -30,7 +32,7 @@ app.use(session({
 // Express Messages Middleware
 app.use(require('connect-flash')())
 app.use(function(req, res, next){
-  res.locals.messages = require('express-messages')(req, res)
+  res.locals.messages = req.flash();
   next()
 })
 
@@ -43,9 +45,12 @@ app.set('layout', './layouts/layout');
 app.use(static);
 app.use('/account', accountRoute);
 app.get('/', utilities.handleErrors(baseController.buildHome));
-app.get('/inv/type/:classification_id', utilities.handleErrors(invController.buildByClassificationId));
-app.get('/inv/detail/:inv_id', utilities.handleErrors(invController.buildVehicleDetail));
+console.log('Homepage route hit');
+app.get('/inv/type/:classification_id', utilities.handleErrors(inventoryController.buildByClassificationId));
+app.get('/inv/detail/:inv_id', utilities.handleErrors(inventoryController.buildVehicleDetail));
 app.get('/error/test', utilities.handleErrors(errorController.triggerError));
+app.use('/inv', inventoryRoutes);
+
 
 // 404 Handler
 app.use(async (req, res, next) => {
