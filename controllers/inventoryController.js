@@ -6,21 +6,31 @@ const invCont = {};
 invCont.buildByClassificationId = async function (req, res, next) {
   try {
     const classification_id = req.params.classification_id;
-    const data = await invModel.getInventoryByClassificationId(classification_id);
+    // Sanitize and validate classification_id
+    const id = parseInt(classification_id, 10);
+    if (isNaN(id)) {
+      throw new Error('Invalid classification ID');
+    }
+    const data = await invModel.getInventoryByClassificationId(id);
     const nav = await utilities.getNav();
     const className = data.rows[0]?.classification_id
       ? (await invModel.getClassifications()).rows.find(
-          row => row.classification_id == classification_id
+          row => row.classification_id === id
         )?.classification_name || 'Unknown'
       : 'No vehicles';
+    data.rows.forEach(vehicle => {
+      console.log('Vehicle ID:', vehicle.inv_id);
+      console.log('Image Path from DB:', vehicle.inv_image);
+      console.log('Full URL Attempted:', `${req.protocol}://${req.get('host')}${vehicle.inv_image}`);
+    });
     res.render('inventory/classification', {
       title: `${className} Vehicles`,
       nav,
       vehicles: data.rows,
-      classification_id
+      classification_id: id
     });
   } catch (error) {
-    next({ status: 500, message: 'Error rendering classification view: ' + error.message });
+    next({ status: 400, message: `Error rendering classification view: ${error.message}` });
   }
 };
 
@@ -91,7 +101,7 @@ async function addClassification(req, res, next) {
 
 async function buildAddInventory(req, res, next) {
   let nav = await utilities.getNav();
-  let classificationList = await utilities.buildClassificationList();
+  let classificationList = await utilities.buildClassificationList(req.body.classification_id); // Pass current value
   res.render('inventory/add-inventory', {
     title: 'Add Inventory',
     nav,
@@ -141,10 +151,10 @@ async function addInventory(req, res, next) {
     res.render('inventory/add-inventory', {
       title: 'Add Inventory',
       nav,
-      classificationList: await utilities.buildClassificationList(),
+      classificationList: await utilities.buildClassificationList(req.body.classification_id), // Preserve selection
       errors: null,
       messages: req.flash(),
-      ...req.body // Sticky fields
+      ...req.body // Sticky fields for other inputs
     });
   }
 }
