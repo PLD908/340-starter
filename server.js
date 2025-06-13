@@ -11,6 +11,7 @@ const errorController = require('./controllers/errorController');
 const accountRoute = require('./routes/accountRoute');
 const utilities = require('./utilities');
 const inventoryRoutes = require('./routes/inventoryRoute');
+const cookieParser = require("cookie-parser");
 
 
 
@@ -28,6 +29,8 @@ app.use(session({
   saveUninitialized: true,
   name: 'sessionId',
 }))
+app.use(cookieParser());
+app.use(utilities.checkJWTToken);
 
 // Express Messages Middleware
 app.use(require('connect-flash')())

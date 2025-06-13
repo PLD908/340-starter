@@ -53,7 +53,7 @@
       id="account_email"
       name="account_email"
       placeholder="Enter your email"
-      value="<%= locals.account_email || '' %>"
+      value="<%= (messages && messages.error) ? locals.account_email || '' : '' %>"
       required
     />
     <label for="account_password">Password</label>
