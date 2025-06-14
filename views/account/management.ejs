@@ -1,8 +1,12 @@
-<h1><%= title %></h1>
-<% if (messages && messages.success) { %>
-  <p class="flash-message success"><%= messages.success %></p>
-<% } %>
-<% if (errors) { %>
-  <p class="flash-message error"><%= errors %></p>
-<% } %>
-<p>You're logged in</p>
+<div class="management-container">
+  <% if (locals.user) { %>
+    <h2>Welcome <%= user.account_firstname || 'User' %></h2>
+    <% if (user.account_type && (user.account_type === 'Employee' || user.account_type === 'Admin')) { %>
+      <h3>Inventory Management</h3>
+      <p><a href="/inv/">Manage Inventory</a></p>
+    <% } %>
+    <p><a href="/account/update/<%= user.account_id || '' %>">Update Account Information</a></p>
+  <% } else { %>
+    <h2>Please log in to view your account.</h2>
+  <% } %>
+</div>
