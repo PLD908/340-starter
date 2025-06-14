@@ -21,4 +21,40 @@ router.post(
   utilities.handleErrors(inventoryController.addInventory)
 );
 
+router.get("/getInventory/:classification_id", utilities.handleErrors(inventoryController.getInventoryJSON));
+/* ***************************
+ * Route to build inventory by classification
+ * ************************** */
+router.get("/type/:classification_id", utilities.handleErrors(inventoryController.buildByClassificationId));
+
+/* ***************************
+ * Route to build inventory edit view
+ * ************************** */
+router.get("/edit/:inv_id", utilities.handleErrors(inventoryController.editInventoryView));
+
+/* ***************************
+ * Route to handle inventory update
+ * ************************** */
+router.post("/update/", [
+  invValidate.inventoryRules(), 
+  invValidate.checkUpdateData,
+], utilities.handleErrors(inventoryController.updateInventory));
+
+router.get('/delete/:inv_id', async (req, res, next) => {
+  try {
+    const { inv_id } = req.params;
+    await inventoryController.buildDeleteConfirm(req, res, next);
+  } catch (error) {
+    next(error); 
+  }
+});
+
+router.post('/delete', async (req, res, next) => {
+  try {
+    await inventoryController.executeDelete(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

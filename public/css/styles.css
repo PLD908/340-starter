@@ -689,3 +689,16 @@ nav ul li a {
     width: auto;
   }
 }
+
+#inventoryDisplay {
+  width: 100%;
+  border-collapse: collapse;
+}
+#inventoryDisplay th, #inventoryDisplay td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+#inventoryDisplay th {
+  background-color: #f2f2f2;
+}
