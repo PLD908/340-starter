@@ -733,3 +733,13 @@ input {
 #tools a:hover {
   color: #007bff;
 }
+
+.update-container {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(13, 13, 13, 0.1);
+}
+.error { color: var(--accent-color); }

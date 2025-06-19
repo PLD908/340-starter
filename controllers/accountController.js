@@ -140,59 +140,62 @@ accCont.buildManagement = async (req, res, next) => {
   }
 };
 
-accCont.buildUpdate = async (req, res) => {
+accCont.buildUpdate = async (req, res, next) => {
+  const account_id = parseInt(req.params.account_id);
+  if (account_id !== res.locals.accountData.account_id && res.locals.accountData.account_type !== 'Admin') {
+    req.flash('error', 'You can only update your own account.');
+    return res.redirect('/account/update/' + res.locals.accountData.account_id);
+  }
+  res.render('account/update', {
+    title: 'Update Account',
+    nav: await utilities.getNav(),
+    accountData: res.locals.accountData
+  });
+}
+
+// In accountController.js
+accCont.updateAccount = async (req, res, next) => {
+  console.log('updateAccount called with req.body:', req.body);
+  const { account_firstname, account_lastname, account_email } = req.body;
+  const account_id = parseInt(req.params.account_id);
   try {
-    const nav = await utilities.getNav();
-    res.render('account/update', {
-      title: 'Update Account',
-      nav,
-      user: res.locals.accountData
-    });
+    if (account_id !== res.locals.accountData.account_id && res.locals.accountData.account_type !== 'Admin') {
+      throw new Error('Unauthorized to update this account');
+    }
+    const updateData = await accModel.updateAccount(account_id, account_firstname, account_lastname, account_email);
+    if (updateData.rowCount) {
+      req.flash('success', 'Account updated successfully.');
+    } else {
+      req.flash('error', 'Update failed.');
+    }
+    res.redirect('/account/management');
   } catch (err) {
-    next(err);
+    console.error('updateAccount error:', err.stack);
+    req.flash('error', err.message);
+    res.redirect('/account/update/' + account_id);
   }
 };
 
-accCont.updateAccount = async (req, res) => {
-  const { accountId, firstName, lastName, email } = req.body;
+accCont.updatePassword = async (req, res, next) => {
+  console.log('updatePassword called with req.body:', req.body);
+  const { account_password } = req.body;
+  const account_id = parseInt(req.params.account_id);
   try {
-    const errors = [];
-    if (!firstName || !lastName || !email) errors.push('All fields are required.');
-    const existing = await accountModel.getAccountByEmail(email);
-    if (existing.length && existing[0].account_id != accountId) errors.push('Email already exists.');
-    if (errors.length) {
-      res.render('account/update', { user: req.body, errors, message: null });
-      return;
+    if (account_id !== res.locals.accountData.account_id && res.locals.accountData.account_type !== 'Admin') {
+      throw new Error('Unauthorized to update this password');
     }
-    await accountModel.updateAccount(accountId, { firstName, lastName, email });
-    const updated = await accountModel.getAccountById(accountId);
-    req.flash('success', 'Account updated successfully.');
-    res.render('account/management', { user: updated[0], message: req.flash('success') });
+    const hashedPassword = await bcrypt.hash(account_password, 10);
+    const updateData = await accModel.updatePassword(account_id, hashedPassword);
+    if (updateData.rowCount) {
+      req.flash('success', 'Password updated successfully.');
+    } else {
+      req.flash('error', 'Password update failed.');
+    }
+    res.redirect('/account/management');
   } catch (err) {
-    req.flash('error', 'Error updating account.');
-    res.render('account/management', { user: null, message: req.flash('error') });
-  }
-};
-
-accCont.updatePassword = async (req, res) => {
-  const { accountId, password } = req.body;
-  try {
-    const errors = [];
-    if (!password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/)) {
-      errors.push('Password must be at least 8 chars with uppercase, lowercase, and a number.');
-    }
-    if (errors.length) {
-      res.render('account/update', { user: req.body, errors, message: null });
-      return;
-    }
-    const hash = await bcrypt.hash(password, 10);
-    await accountModel.updatePassword(accountId, hash);
-    const updated = await accountModel.getAccountById(accountId);
-    req.flash('success', 'Password updated successfully.');
-    res.render('account/management', { user: updated[0], message: req.flash('success') });
-  } catch (err) {
-    req.flash('error', 'Error updating password.');
-    res.render('account/management', { user: null, message: req.flash('error') });
+    console.error('updatePassword error:', err.stack);
+    req.flash('error', err.message);
+    res.redirect('/account/update/' + account_id);
   }
 };
 
